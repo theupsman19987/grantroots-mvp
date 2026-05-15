@@ -2,8 +2,8 @@ import { NextResponse } from 'next/server'
 import { Resend } from 'resend'
 import { getPool } from '@/lib/db'
 
-// Allow up to 10 minutes for the full sync + enrichment pipeline (Vercel Pro)
-export const maxDuration = 600
+// Vercel Hobby plan maximum is 300s
+export const maxDuration = 300
 
 // ── Auth ──────────────────────────────────────────────────────────────────────
 
