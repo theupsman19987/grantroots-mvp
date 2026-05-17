@@ -8,6 +8,7 @@ export function getPool(): Pool {
       connectionString: process.env.POSTGRES_URL,
       max: 5,
       idleTimeoutMillis: 30_000,
+      ssl: { rejectUnauthorized: false },
     })
   }
   return _pool
