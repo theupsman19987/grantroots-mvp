@@ -1,7 +1,50 @@
+import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
+const PROTECTED = ['/profile', '/admin']
+const AUTH_PAGES = ['/auth/login', '/auth/signup', '/auth/reset-password']
+
 export async function middleware(request: NextRequest) {
-  return NextResponse.next()
+  let response = NextResponse.next({ request })
+
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() {
+          return request.cookies.getAll()
+        },
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value))
+          response = NextResponse.next({ request })
+          cookiesToSet.forEach(({ name, value, options }) =>
+            response.cookies.set(name, value, options)
+          )
+        },
+      },
+    }
+  )
+
+  const { data: { user } } = await supabase.auth.getUser()
+
+  const { pathname } = request.nextUrl
+
+  if (!user && PROTECTED.some((p) => pathname.startsWith(p))) {
+    const loginUrl = request.nextUrl.clone()
+    loginUrl.pathname = '/auth/login'
+    loginUrl.searchParams.set('next', pathname)
+    return NextResponse.redirect(loginUrl)
+  }
+
+  if (user && AUTH_PAGES.some((p) => pathname.startsWith(p))) {
+    const profileUrl = request.nextUrl.clone()
+    profileUrl.pathname = '/profile'
+    profileUrl.searchParams.delete('next')
+    return NextResponse.redirect(profileUrl)
+  }
+
+  return response
 }
 
 export const config = {
