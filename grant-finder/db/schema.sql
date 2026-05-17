@@ -10,9 +10,20 @@ CREATE EXTENSION IF NOT EXISTS "pg_trgm";    -- fast ILIKE / full-text search
 
 -- — Enum types ————————————————————————————————————————————————————————————
 
-CREATE TYPE grant_source AS ENUM ('gov', 'candid');
-CREATE TYPE grant_status AS ENUM ('open', 'forecasted', 'closed', 'archived');
-CREATE TYPE review_status AS ENUM ('pending', 'approved', 'rejected', 'featured');
+DO $$ BEGIN
+  CREATE TYPE grant_source AS ENUM ('gov', 'candid');
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
+
+DO $$ BEGIN
+  CREATE TYPE grant_status AS ENUM ('open', 'forecasted', 'closed', 'archived');
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
+
+DO $$ BEGIN
+  CREATE TYPE review_status AS ENUM ('pending', 'approved', 'rejected', 'featured');
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
 
 -- — Core grants table ———————————————————————————————————————————————————————
 
@@ -62,9 +73,10 @@ CREATE TABLE IF NOT EXISTS grants (
 );
 
 -- Unique constraint: one row per (source, external_id)
-ALTER TABLE grants
-  ADD CONSTRAINT grants_source_external_id_key
-  UNIQUE (source, external_id);
+DO $$ BEGIN
+  ALTER TABLE grants ADD CONSTRAINT grants_source_external_id_key UNIQUE (source, external_id);
+EXCEPTION WHEN duplicate_table THEN NULL;
+END $$;
 
 -- — Sync logs table —————————————————————————————————————————————————————————
 
@@ -140,6 +152,7 @@ BEGIN
 END;
 $$;
 
+DROP TRIGGER IF EXISTS grants_updated_at ON grants;
 CREATE TRIGGER grants_updated_at
   BEFORE UPDATE ON grants
   FOR EACH ROW EXECUTE FUNCTION touch_updated_at();
