@@ -7,41 +7,44 @@ const AUTH_PAGES = ['/auth/login', '/auth/signup', '/auth/reset-password']
 export async function middleware(request: NextRequest) {
   let response = NextResponse.next({ request })
 
-  const supabase = createServerClient(
-    process.env.SUPABASE_URL!,
-    process.env.SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return request.cookies.getAll()
+  try {
+    const supabase = createServerClient(
+      process.env.SUPABASE_URL!,
+      process.env.SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          getAll() {
+            return request.cookies.getAll()
+          },
+          setAll(cookiesToSet) {
+            cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value))
+            response = NextResponse.next({ request })
+            cookiesToSet.forEach(({ name, value, options }) =>
+              response.cookies.set(name, value, options)
+            )
+          },
         },
-        setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value))
-          response = NextResponse.next({ request })
-          cookiesToSet.forEach(({ name, value, options }) =>
-            response.cookies.set(name, value, options)
-          )
-        },
-      },
+      }
+    )
+
+    const { data: { user } } = await supabase.auth.getUser()
+    const { pathname } = request.nextUrl
+
+    if (!user && PROTECTED.some((p) => pathname.startsWith(p))) {
+      const loginUrl = request.nextUrl.clone()
+      loginUrl.pathname = '/auth/login'
+      loginUrl.searchParams.set('next', pathname)
+      return NextResponse.redirect(loginUrl)
     }
-  )
 
-  const { data: { user } } = await supabase.auth.getUser()
-
-  const { pathname } = request.nextUrl
-
-  if (!user && PROTECTED.some((p) => pathname.startsWith(p))) {
-    const loginUrl = request.nextUrl.clone()
-    loginUrl.pathname = '/auth/login'
-    loginUrl.searchParams.set('next', pathname)
-    return NextResponse.redirect(loginUrl)
-  }
-
-  if (user && AUTH_PAGES.some((p) => pathname.startsWith(p))) {
-    const profileUrl = request.nextUrl.clone()
-    profileUrl.pathname = '/profile'
-    profileUrl.searchParams.delete('next')
-    return NextResponse.redirect(profileUrl)
+    if (user && AUTH_PAGES.some((p) => pathname.startsWith(p))) {
+      const profileUrl = request.nextUrl.clone()
+      profileUrl.pathname = '/profile'
+      profileUrl.searchParams.delete('next')
+      return NextResponse.redirect(profileUrl)
+    }
+  } catch {
+    // Supabase auth failed — serve the page anyway, auth protection skipped
   }
 
   return response
