@@ -15,7 +15,13 @@ export function useAuth(): AuthState {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const supabase = createClient()
+    let supabase: ReturnType<typeof createClient>
+    try {
+      supabase = createClient()
+    } catch {
+      setLoading(false)
+      return
+    }
 
     supabase.auth.getUser().then(({ data: { user } }) => {
       setUser(user)
