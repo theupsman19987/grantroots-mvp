@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, Suspense } from 'react'
+import { useState, useEffect, useRef, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { toast } from 'sonner'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -11,9 +11,11 @@ import { GrantCard } from '@/components/grants/GrantCard'
 import { GrantTable } from '@/components/grants/GrantTable'
 import { FilterSidebar } from '@/components/search/FilterSidebar'
 import { ResultsHeader } from '@/components/search/ResultsHeader'
+import { MembersOnlyDialog } from '@/components/members-only-dialog'
 import { useGrantSearch } from '@/hooks/useGrantSearch'
 import { useGrants } from '@/hooks/useGrants'
 import { useSavedGrants } from '@/hooks/useSavedGrants'
+import { useAuth } from '@/hooks/useAuth'
 import { GrantFilters, FunderType, ApplicantType } from '@/lib/types'
 
 const PAGE_SIZE = 12
@@ -23,6 +25,7 @@ function SearchResults() {
   const [view, setView] = useState<'card' | 'table'>('card')
   const [page, setPage] = useState(1)
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false)
+  const [membersOnlyOpen, setMembersOnlyOpen] = useState(false)
 
   const initialFilters: Partial<GrantFilters> = {
     query: searchParams.get('q') ?? '',
@@ -43,8 +46,18 @@ function SearchResults() {
     toggleAgency,
   } = useGrantSearch(initialFilters)
 
+  const { user, userState, loading: authLoading } = useAuth()
   const { grants: allGrants } = useGrants()
   const { isSaved, saveGrant, unsaveGrant } = useSavedGrants()
+
+  // Auto-apply user's home state as a geographic filter on first load
+  const hasAutoApplied = useRef(false)
+  useEffect(() => {
+    if (!authLoading && userState && !hasAutoApplied.current && filters.geographicFocus.length === 0) {
+      updateFilter('geographicFocus', [userState])
+      hasAutoApplied.current = true
+    }
+  }, [authLoading, userState])
 
   const totalPages = Math.ceil(results.length / PAGE_SIZE)
   const pageResults = results.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
@@ -54,6 +67,7 @@ function SearchResults() {
   }, [filters])
 
   const handleSave = (id: string) => {
+    if (!user) { setMembersOnlyOpen(true); return }
     saveGrant(id)
     toast.success('Grant saved!', {
       description: 'Added to your saved grants.',
@@ -62,6 +76,7 @@ function SearchResults() {
   }
 
   const handleUnsave = (id: string) => {
+    if (!user) { setMembersOnlyOpen(true); return }
     unsaveGrant(id)
     toast('Grant removed from saved.')
   }
@@ -121,7 +136,9 @@ function SearchResults() {
                 type="text"
                 value={filters.query}
                 onChange={(e) => { updateFilter('query', e.target.value); setPage(1) }}
+                onFocus={() => { if (!user && !authLoading) setMembersOnlyOpen(true) }}
                 placeholder="Search by keyword, agency, or topic…"
+                readOnly={!user && !authLoading}
                 className="w-full rounded-lg border border-input bg-background pl-9 pr-9 py-2.5 text-sm outline-none focus:ring-2 focus:ring-[#6B0F1A]/30 focus:border-[#6B0F1A] placeholder:text-muted-foreground"
               />
               {filters.query && (
@@ -230,6 +247,8 @@ function SearchResults() {
           </div>
         </div>
       </div>
+
+      <MembersOnlyDialog open={membersOnlyOpen} onOpenChange={setMembersOnlyOpen} />
     </div>
   )
 }

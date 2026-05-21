@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase/client'
 
 interface AuthState {
   user: User | null
+  userState: string | null
   loading: boolean
   signOut: () => Promise<void>
 }
@@ -40,5 +41,7 @@ export function useAuth(): AuthState {
     await supabase.auth.signOut()
   }
 
-  return { user, loading, signOut }
+  const userState = (user?.user_metadata?.state as string) ?? null
+
+  return { user, userState, loading, signOut }
 }

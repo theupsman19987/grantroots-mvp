@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { Search, Loader2 } from 'lucide-react'
 import {
@@ -14,6 +14,8 @@ import {
   CommandSeparator,
 } from '@/components/ui/command'
 import { useGrants } from '@/hooks/useGrants'
+import { useAuth } from '@/hooks/useAuth'
+import { MembersOnlyDialog } from '@/components/members-only-dialog'
 import { formatAmountRange } from '@/lib/utils'
 import { BorderBeam } from '@/components/ui/border-beam'
 
@@ -27,14 +29,24 @@ interface SearchCommandProps {
 
 export function SearchCommand({ compact = false, glass = false, gold = false }: SearchCommandProps) {
   const [open, setOpen] = useState(false)
+  const [membersOnlyOpen, setMembersOnlyOpen] = useState(false)
   const [query, setQuery] = useState('')
   const router = useRouter()
   const { grants, loading } = useGrants()
+  const { user } = useAuth()
+  const userRef = useRef(user)
+  useEffect(() => { userRef.current = user }, [user])
+
+  const openSearch = useCallback(() => {
+    if (!userRef.current) { setMembersOnlyOpen(true); return }
+    setOpen(true)
+  }, [])
 
   useEffect(() => {
     const down = (e: KeyboardEvent) => {
       if (e.key === 'k' && (e.metaKey || e.ctrlKey)) {
         e.preventDefault()
+        if (!userRef.current) { setMembersOnlyOpen(true); return }
         setOpen((open) => !open)
       }
     }
@@ -65,11 +77,18 @@ export function SearchCommand({ compact = false, glass = false, gold = false }: 
     }
   }, [query, router])
 
+  const dialogs = (
+    <>
+      <SearchDialog open={open} setOpen={setOpen} query={query} setQuery={setQuery} filteredGrants={filteredGrants} loading={loading} handleSelect={handleSelect} handleSearch={handleSearch} />
+      <MembersOnlyDialog open={membersOnlyOpen} onOpenChange={setMembersOnlyOpen} />
+    </>
+  )
+
   if (compact) {
     return (
       <>
         <button
-          onClick={() => setOpen(true)}
+          onClick={openSearch}
           className="flex w-full items-center gap-2 rounded-md border border-input bg-muted/50 px-3 h-9 text-sm text-muted-foreground hover:bg-muted transition-colors"
         >
           <Search className="size-3.5 shrink-0" />
@@ -78,7 +97,7 @@ export function SearchCommand({ compact = false, glass = false, gold = false }: 
             ⌘K
           </kbd>
         </button>
-        <SearchDialog open={open} setOpen={setOpen} query={query} setQuery={setQuery} filteredGrants={filteredGrants} loading={loading} handleSelect={handleSelect} handleSearch={handleSearch} />
+        {dialogs}
       </>
     )
   }
@@ -87,7 +106,7 @@ export function SearchCommand({ compact = false, glass = false, gold = false }: 
     return (
       <>
         <button
-          onClick={() => setOpen(true)}
+          onClick={openSearch}
           className="flex w-full items-center gap-3 rounded-xl border border-[#800020]/30 bg-[#D4B86A] px-4 h-14 text-base text-[#800020] hover:bg-[#C9A84C] transition-all shadow-sm"
         >
           <Search className="size-5 shrink-0 text-[#800020]/70" />
@@ -96,7 +115,7 @@ export function SearchCommand({ compact = false, glass = false, gold = false }: 
             ⌘K
           </kbd>
         </button>
-        <SearchDialog open={open} setOpen={setOpen} query={query} setQuery={setQuery} filteredGrants={filteredGrants} loading={loading} handleSelect={handleSelect} handleSearch={handleSearch} />
+        {dialogs}
       </>
     )
   }
@@ -105,7 +124,7 @@ export function SearchCommand({ compact = false, glass = false, gold = false }: 
     return (
       <>
         <button
-          onClick={() => setOpen(true)}
+          onClick={openSearch}
           className="flex w-full items-center gap-3 rounded-xl border border-white/30 bg-white/15 backdrop-blur-md px-4 h-14 text-base text-white/80 hover:bg-white/25 hover:border-white/50 transition-all shadow-lg"
         >
           <Search className="size-5 shrink-0 text-white/70" />
@@ -114,7 +133,7 @@ export function SearchCommand({ compact = false, glass = false, gold = false }: 
             ⌘K
           </kbd>
         </button>
-        <SearchDialog open={open} setOpen={setOpen} query={query} setQuery={setQuery} filteredGrants={filteredGrants} loading={loading} handleSelect={handleSelect} handleSearch={handleSearch} />
+        {dialogs}
       </>
     )
   }
@@ -123,7 +142,7 @@ export function SearchCommand({ compact = false, glass = false, gold = false }: 
     <>
       <div className="relative w-full rounded-xl">
         <button
-          onClick={() => setOpen(true)}
+          onClick={openSearch}
           className="flex w-full items-center gap-3 rounded-xl border-2 border-input bg-background px-4 h-14 text-base text-muted-foreground hover:border-primary/50 transition-colors shadow-sm"
         >
           <Search className="size-5 shrink-0" />
@@ -134,7 +153,7 @@ export function SearchCommand({ compact = false, glass = false, gold = false }: 
         </button>
         <BorderBeam colorFrom="#C9A84C" colorTo="#6B0F1A" size={80} duration={4} borderWidth={2} />
       </div>
-      <SearchDialog open={open} setOpen={setOpen} query={query} setQuery={setQuery} filteredGrants={filteredGrants} loading={loading} handleSelect={handleSelect} handleSearch={handleSearch} />
+      {dialogs}
     </>
   )
 }
