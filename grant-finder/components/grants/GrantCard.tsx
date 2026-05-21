@@ -17,6 +17,7 @@ interface GrantCardProps {
   isSaved?: boolean
   onSave?: (id: string) => void
   onUnsave?: (id: string) => void
+  onGuestClick?: () => void
 }
 
 const funderTypeColors: Record<string, string> = {
@@ -26,7 +27,7 @@ const funderTypeColors: Record<string, string> = {
   community: 'bg-[#A07830] text-white',
 }
 
-export function GrantCard({ grant, isSaved, onSave, onUnsave }: GrantCardProps) {
+export function GrantCard({ grant, isSaved, onSave, onUnsave, onGuestClick }: GrantCardProps) {
   const urgency = getDeadlineUrgency(grant.deadline)
   const progress = getDeadlineProgress(grant.deadline, grant.createdAt)
 
@@ -89,6 +90,7 @@ export function GrantCard({ grant, isSaved, onSave, onUnsave }: GrantCardProps) 
         <Link
           href={`/grants/${grant.id}`}
           className="font-semibold text-sm leading-snug hover:text-primary transition-colors line-clamp-2 mt-1"
+          onClick={(e) => { if (onGuestClick) { e.preventDefault(); onGuestClick() } }}
         >
           {grant.title}
         </Link>
@@ -154,6 +156,7 @@ export function GrantCard({ grant, isSaved, onSave, onUnsave }: GrantCardProps) 
             render={<Link href={`/grants/${grant.id}`} />}
             size="sm"
             className="flex-1 h-7 text-xs"
+            onClick={(e: React.MouseEvent) => { if (onGuestClick) { e.preventDefault(); onGuestClick() } }}
           >
             View Details
           </Button>

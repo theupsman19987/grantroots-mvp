@@ -29,9 +29,10 @@ interface GrantTableProps {
   isSaved: (id: string) => boolean
   onSave: (id: string) => void
   onUnsave: (id: string) => void
+  onGuestClick?: () => void
 }
 
-export function GrantTable({ grants, isSaved, onSave, onUnsave }: GrantTableProps) {
+export function GrantTable({ grants, isSaved, onSave, onUnsave, onGuestClick }: GrantTableProps) {
   const [sorting, setSorting] = useState<SortingState>([])
 
   const columns: ColumnDef<Grant>[] = [
@@ -47,6 +48,7 @@ export function GrantTable({ grants, isSaved, onSave, onUnsave }: GrantTableProp
         <Link
           href={`/grants/${row.original.id}`}
           className="font-medium text-sm hover:text-primary transition-colors max-w-xs block truncate"
+          onClick={(e) => { if (onGuestClick) { e.preventDefault(); onGuestClick() } }}
         >
           {row.original.title}
         </Link>
@@ -131,6 +133,7 @@ export function GrantTable({ grants, isSaved, onSave, onUnsave }: GrantTableProp
               size="sm"
               variant="ghost"
               className="h-7 text-xs"
+              onClick={(e: React.MouseEvent) => { if (onGuestClick) { e.preventDefault(); onGuestClick() } }}
             >
               View
             </Button>

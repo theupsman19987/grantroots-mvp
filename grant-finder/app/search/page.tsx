@@ -215,6 +215,7 @@ function SearchResults() {
                     isSaved={isSaved(grant.id)}
                     onSave={handleSave}
                     onUnsave={handleUnsave}
+                    onGuestClick={!user && !authLoading ? () => setMembersOnlyOpen(true) : undefined}
                   />
                 ))}
               </div>
@@ -224,6 +225,7 @@ function SearchResults() {
                 isSaved={isSaved}
                 onSave={handleSave}
                 onUnsave={handleUnsave}
+                onGuestClick={!user && !authLoading ? () => setMembersOnlyOpen(true) : undefined}
               />
             )}
 

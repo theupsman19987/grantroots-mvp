@@ -1,5 +1,6 @@
 'use client'
 
+import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
@@ -22,6 +23,8 @@ import { useGrants } from '@/hooks/useGrants'
 import { useSavedGrants } from '@/hooks/useSavedGrants'
 import { useSyncStatus } from '@/hooks/useSyncStatus'
 import { useIsMobile } from '@/hooks/use-mobile'
+import { useAuth } from '@/hooks/useAuth'
+import { MembersOnlyDialog } from '@/components/members-only-dialog'
 
 const CATEGORIES = [
   { label: 'Community Development', href: '/search?area=Community+development' },
@@ -71,6 +74,8 @@ const BENTO_TILES = [
 export default function HomePage() {
   const router = useRouter()
   const isMobile = useIsMobile()
+  const { user, loading: authLoading } = useAuth()
+  const [membersOnlyOpen, setMembersOnlyOpen] = useState(false)
   const { isSaved, saveGrant, unsaveGrant } = useSavedGrants()
   const { grants, loading: grantsLoading } = useGrants()
   const { lastSyncAt } = useSyncStatus()
@@ -82,11 +87,15 @@ export default function HomePage() {
     })
     .slice(0, 3)
 
+  const guestClick = !user && !authLoading ? () => setMembersOnlyOpen(true) : undefined
+
   const handleSave = (id: string) => {
+    if (!user) { setMembersOnlyOpen(true); return }
     saveGrant(id)
     toast.success('Grant saved!', { description: 'Added to your saved grants.' })
   }
   const handleUnsave = (id: string) => {
+    if (!user) { setMembersOnlyOpen(true); return }
     unsaveGrant(id)
     toast('Grant removed from saved.')
   }
@@ -333,7 +342,7 @@ export default function HomePage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {closingSoon.map((grant, i) => (
                 <BlurFade key={grant.id} delay={i * 0.1} inView direction="up">
-                  <GrantCard grant={grant} isSaved={isSaved(grant.id)} onSave={handleSave} onUnsave={handleUnsave} />
+                  <GrantCard grant={grant} isSaved={isSaved(grant.id)} onSave={handleSave} onUnsave={handleUnsave} onGuestClick={guestClick} />
                 </BlurFade>
               ))}
             </div>
@@ -378,7 +387,7 @@ export default function HomePage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {featuredGrants.map((grant, i) => (
                 <BlurFade key={grant.id} delay={i * 0.07} inView direction="up">
-                  <GrantCard grant={grant} isSaved={isSaved(grant.id)} onSave={handleSave} onUnsave={handleUnsave} />
+                  <GrantCard grant={grant} isSaved={isSaved(grant.id)} onSave={handleSave} onUnsave={handleUnsave} onGuestClick={guestClick} />
                 </BlurFade>
               ))}
             </div>
@@ -420,6 +429,8 @@ export default function HomePage() {
           </div>
         </BlurFade>
       </section>
+
+      <MembersOnlyDialog open={membersOnlyOpen} onOpenChange={setMembersOnlyOpen} />
     </main>
   )
 }
