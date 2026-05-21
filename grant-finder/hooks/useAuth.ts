@@ -7,6 +7,10 @@ import { createClient } from '@/lib/supabase/client'
 interface AuthState {
   user: User | null
   userState: string | null
+  accountType: 'student' | 'organization' | null
+  schoolType: 'college' | 'trade' | null
+  gpa: string | null
+  fieldOfStudy: string | null
   loading: boolean
   signOut: () => Promise<void>
 }
@@ -41,7 +45,12 @@ export function useAuth(): AuthState {
     await supabase.auth.signOut()
   }
 
-  const userState = (user?.user_metadata?.state as string) ?? null
+  const meta = user?.user_metadata ?? {}
+  const userState = (meta.state as string) ?? null
+  const accountType = (meta.account_type as 'student' | 'organization') ?? null
+  const schoolType = (meta.school_type as 'college' | 'trade') ?? null
+  const gpa = (meta.gpa as string) ?? null
+  const fieldOfStudy = (meta.field_of_study as string) ?? null
 
-  return { user, userState, loading, signOut }
+  return { user, userState, accountType, schoolType, gpa, fieldOfStudy, loading, signOut }
 }
