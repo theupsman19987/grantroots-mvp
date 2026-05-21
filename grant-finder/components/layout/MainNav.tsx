@@ -15,6 +15,7 @@ import { cn } from '@/lib/utils'
 const navLinks = [
   { href: '/', label: 'Home' },
   { href: '/search', label: 'Find Grants' },
+  { href: '/scholarships', label: 'Scholarships' },
   { href: '/about', label: 'About' },
   { href: '/contact', label: 'Contact Us' },
 ]

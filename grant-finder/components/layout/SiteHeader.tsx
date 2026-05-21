@@ -120,6 +120,7 @@ export function SiteHeader() {
                 <nav className="mt-8 flex flex-col gap-3">
                   <Link href="/" className="text-sm font-medium text-[#6B0F1A] hover:text-[#C9A84C] hover:[text-shadow:-1px_-1px_0_#000,1px_-1px_0_#000,-1px_1px_0_#000,1px_1px_0_#000] transition-all duration-200">Home</Link>
                   <Link href="/search" className="text-sm font-medium text-[#6B0F1A] hover:text-[#C9A84C] hover:[text-shadow:-1px_-1px_0_#000,1px_-1px_0_#000,-1px_1px_0_#000,1px_1px_0_#000] transition-all duration-200">Find Grants</Link>
+                  <Link href="/scholarships" className="text-sm font-medium text-[#6B0F1A] hover:text-[#C9A84C] hover:[text-shadow:-1px_-1px_0_#000,1px_-1px_0_#000,-1px_1px_0_#000,1px_1px_0_#000] transition-all duration-200">Scholarships</Link>
                   <Link href="/about" className="text-sm font-medium text-[#6B0F1A] hover:text-[#C9A84C] hover:[text-shadow:-1px_-1px_0_#000,1px_-1px_0_#000,-1px_1px_0_#000,1px_1px_0_#000] transition-all duration-200">About</Link>
                   <Link href="/contact" className="text-sm font-medium text-[#6B0F1A] hover:text-[#C9A84C] hover:[text-shadow:-1px_-1px_0_#000,1px_-1px_0_#000,-1px_1px_0_#000,1px_1px_0_#000] transition-all duration-200">Contact Us</Link>
 

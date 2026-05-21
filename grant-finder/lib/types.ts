@@ -63,6 +63,46 @@ export interface Funder {
   assets?: string
 }
 
+export type ScholarshipEthnicity =
+  | 'Black/African American'
+  | 'Hispanic/Latino'
+  | 'Native American/Alaska Native'
+  | 'Asian American/Pacific Islander'
+  | 'Pacific Islander'
+  | 'White'
+  | 'All Ethnicities'
+
+export interface Scholarship {
+  id: string
+  title: string
+  sponsor: string
+  amountMin: number
+  amountMax: number
+  amountNote: string | null
+  deadline: Date | null
+  description: string
+  gpaMin: number | null
+  eligibleStates: string[]
+  eligibleEthnicities: ScholarshipEthnicity[]
+  schoolTypes: ('college' | 'trade')[]
+  focusAreas: string[]
+  applyUrl: string
+  isOpen: boolean
+  tags: string[]
+}
+
+export interface ScholarshipFilters {
+  query: string
+  gpaMin: number | null
+  states: string[]
+  ethnicities: ScholarshipEthnicity[]
+  schoolTypes: ('college' | 'trade')[]
+  focusAreas: string[]
+  amountMin: number | null
+  isOpenOnly: boolean
+  sortBy: 'deadline' | 'amount' | 'relevance'
+}
+
 export interface GrantFilters {
   query: string
   funderTypes: FunderType[]
