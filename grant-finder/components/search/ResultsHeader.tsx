@@ -19,6 +19,7 @@ interface ResultsHeaderProps {
   onClearAll: () => void
   activeFilterCount: number
   onOpenMobileFilters?: () => void
+  onGuestClick?: () => void
 }
 
 export function ResultsHeader({
@@ -31,7 +32,12 @@ export function ResultsHeader({
   onClearAll,
   activeFilterCount,
   onOpenMobileFilters,
+  onGuestClick,
 }: ResultsHeaderProps) {
+  const gate = (action: () => void) => {
+    if (onGuestClick) { onGuestClick(); return }
+    action()
+  }
   const handleRemove = <K extends keyof GrantFilters>(key: K, value?: unknown) => {
     if (key === 'funderTypes') {
       onFilterUpdate('funderTypes', filters.funderTypes.filter((t) => t !== value) as FunderType[])
@@ -67,7 +73,7 @@ export function ResultsHeader({
             <Button
               variant="outline"
               size="sm"
-              onClick={onOpenMobileFilters}
+              onClick={() => gate(onOpenMobileFilters!)}
               className="md:hidden gap-1.5"
             >
               <SlidersHorizontal className="size-3.5" />
@@ -81,7 +87,7 @@ export function ResultsHeader({
           )}
           <Select
             value={filters.sortBy}
-            onValueChange={(v) => onFilterUpdate('sortBy', v as GrantFilters['sortBy'])}
+            onValueChange={(v) => gate(() => onFilterUpdate('sortBy', v as GrantFilters['sortBy']))}
           >
             <SelectTrigger className="h-8 w-[140px] text-xs">
               <SelectValue placeholder="Sort by" />
@@ -95,7 +101,7 @@ export function ResultsHeader({
           </Select>
           <ToggleGroup
             value={[view]}
-            onValueChange={(v) => v.length > 0 && onViewChange(v[0] as 'card' | 'table')}
+            onValueChange={(v) => gate(() => v.length > 0 && onViewChange(v[0] as 'card' | 'table'))}
             className="border rounded-md"
           >
             <ToggleGroupItem value="card" aria-label="Card view" className="h-8 w-8 p-0">

@@ -27,6 +27,7 @@ interface FilterSidebarProps {
   onToggleAgency: (agency: string) => void
   onReset: () => void
   activeFilterCount: number
+  onGuestClick?: () => void
 }
 
 export function FilterSidebar({
@@ -38,7 +39,12 @@ export function FilterSidebar({
   onToggleAgency,
   onReset,
   activeFilterCount,
+  onGuestClick,
 }: FilterSidebarProps) {
+  const gate = (action: () => void) => {
+    if (onGuestClick) { onGuestClick(); return }
+    action()
+  }
   const { focusAreas, applicants, agencies, loading } = useFilterCounts()
 
   return (
@@ -46,7 +52,7 @@ export function FilterSidebar({
       <div className="flex items-center justify-between">
         <h2 className="font-semibold">Filters</h2>
         {activeFilterCount > 0 && (
-          <Button variant="ghost" size="sm" onClick={onReset} className="h-7 text-xs">
+          <Button variant="ghost" size="sm" onClick={() => gate(onReset)} className="h-7 text-xs">
             Reset all
           </Button>
         )}
@@ -57,7 +63,7 @@ export function FilterSidebar({
           <Switch
             id="open-only"
             checked={filters.isOpenOnly}
-            onCheckedChange={(v) => onUpdate('isOpenOnly', v)}
+            onCheckedChange={(v) => gate(() => onUpdate('isOpenOnly', v))}
           />
           <Label htmlFor="open-only" className="text-sm cursor-pointer">
             Open grants only
@@ -67,7 +73,7 @@ export function FilterSidebar({
           <Switch
             id="include-archived"
             checked={filters.includeArchived}
-            onCheckedChange={(v) => onUpdate('includeArchived', v)}
+            onCheckedChange={(v) => gate(() => onUpdate('includeArchived', v))}
           />
           <Label htmlFor="include-archived" className="text-sm cursor-pointer">
             Include closed/archived
@@ -116,7 +122,7 @@ export function FilterSidebar({
                           <Checkbox
                             id={`app-${value}`}
                             checked={filters.eligibleApplicants.includes(value)}
-                            onCheckedChange={() => !isEmpty && onToggleApplicant(value)}
+                            onCheckedChange={() => gate(() => !isEmpty && onToggleApplicant(value))}
                             disabled={isEmpty}
                           />
                           <Label
@@ -154,7 +160,7 @@ export function FilterSidebar({
                   ? 'large'
                   : 'any'
               }
-              onValueChange={(v) => {
+              onValueChange={(v) => gate(() => {
                 if (v === 'any') {
                   onUpdate('amountMin', null)
                   onUpdate('amountMax', null)
@@ -168,7 +174,7 @@ export function FilterSidebar({
                   onUpdate('amountMin', 250000)
                   onUpdate('amountMax', null)
                 }
-              }}
+              })}
               className="flex flex-col gap-2.5 pb-1"
             >
               {[
@@ -213,7 +219,7 @@ export function FilterSidebar({
                             <Checkbox
                               id={`area-${name}`}
                               checked={filters.focusAreas.includes(name)}
-                              onCheckedChange={() => !isEmpty && onToggleFocusArea(name)}
+                              onCheckedChange={() => gate(() => !isEmpty && onToggleFocusArea(name))}
                               disabled={isEmpty}
                             />
                             <Label
@@ -261,7 +267,7 @@ export function FilterSidebar({
                           <Checkbox
                             id={`agency-${name}`}
                             checked={filters.agencies.includes(name)}
-                            onCheckedChange={() => onToggleAgency(name)}
+                            onCheckedChange={() => gate(() => onToggleAgency(name))}
                           />
                           <Label
                             htmlFor={`agency-${name}`}

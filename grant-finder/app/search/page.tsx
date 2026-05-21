@@ -101,6 +101,7 @@ function SearchResults() {
                 onToggleAgency={toggleAgency}
                 onReset={resetFilters}
                 activeFilterCount={activeFilterCount}
+                onGuestClick={!user && !authLoading ? () => setMembersOnlyOpen(true) : undefined}
               />
             </div>
           </aside>
@@ -118,6 +119,7 @@ function SearchResults() {
                   onToggleAgency={toggleAgency}
                   onReset={resetFilters}
                   activeFilterCount={activeFilterCount}
+                  onGuestClick={!user && !authLoading ? () => setMembersOnlyOpen(true) : undefined}
                 />
               </div>
             </SheetContent>
@@ -177,6 +179,7 @@ function SearchResults() {
               onClearAll={resetFilters}
               activeFilterCount={activeFilterCount}
               onOpenMobileFilters={() => setMobileFiltersOpen(true)}
+              onGuestClick={!user && !authLoading ? () => setMembersOnlyOpen(true) : undefined}
             />
 
             {results.length === 0 ? (
