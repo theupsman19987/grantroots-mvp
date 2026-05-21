@@ -91,7 +91,7 @@ function SearchResults() {
         <div className="flex gap-6">
           {/* Desktop sidebar */}
           <aside className="hidden md:block w-64 shrink-0">
-            <div className="sticky top-20">
+            <div className="sticky top-20 relative">
               <FilterSidebar
                 filters={filters}
                 onUpdate={updateFilter}
@@ -101,8 +101,14 @@ function SearchResults() {
                 onToggleAgency={toggleAgency}
                 onReset={resetFilters}
                 activeFilterCount={activeFilterCount}
-                onGuestClick={!user && !authLoading ? () => setMembersOnlyOpen(true) : undefined}
               />
+              {!user && !authLoading && (
+                <div
+                  className="absolute inset-0 z-10 cursor-pointer"
+                  onClick={() => setMembersOnlyOpen(true)}
+                  aria-hidden="true"
+                />
+              )}
             </div>
           </aside>
 
@@ -119,7 +125,6 @@ function SearchResults() {
                   onToggleAgency={toggleAgency}
                   onReset={resetFilters}
                   activeFilterCount={activeFilterCount}
-                  onGuestClick={!user && !authLoading ? () => setMembersOnlyOpen(true) : undefined}
                 />
               </div>
             </SheetContent>
@@ -169,18 +174,29 @@ function SearchResults() {
               </span>
             </div>
 
-            <ResultsHeader
-              count={results.length}
-              filters={filters}
-              view={view}
-              onViewChange={setView}
-              onFilterUpdate={updateFilter}
-              onFilterRemove={handleFilterRemove}
-              onClearAll={resetFilters}
-              activeFilterCount={activeFilterCount}
-              onOpenMobileFilters={() => setMobileFiltersOpen(true)}
-              onGuestClick={!user && !authLoading ? () => setMembersOnlyOpen(true) : undefined}
-            />
+            <div className="relative">
+              <ResultsHeader
+                count={results.length}
+                filters={filters}
+                view={view}
+                onViewChange={setView}
+                onFilterUpdate={updateFilter}
+                onFilterRemove={handleFilterRemove}
+                onClearAll={resetFilters}
+                activeFilterCount={activeFilterCount}
+                onOpenMobileFilters={() => {
+                  if (!user && !authLoading) { setMembersOnlyOpen(true); return }
+                  setMobileFiltersOpen(true)
+                }}
+              />
+              {!user && !authLoading && (
+                <div
+                  className="absolute inset-0 z-10 cursor-pointer"
+                  onClick={() => setMembersOnlyOpen(true)}
+                  aria-hidden="true"
+                />
+              )}
+            </div>
 
             {results.length === 0 ? (
               <div className="py-24 text-center border rounded-lg">
