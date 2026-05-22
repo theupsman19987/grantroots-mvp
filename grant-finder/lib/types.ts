@@ -49,6 +49,8 @@ export interface SavedGrant {
   status: GrantStatus
   notes: string
   savedAt: Date
+  appliedAt: Date | null
+  resolvedAt: Date | null
 }
 
 export interface Funder {

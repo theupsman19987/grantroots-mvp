@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { Bookmark, CheckCircle2, Clock, Trophy, XCircle, TrendingUp } from 'lucide-react'
+import { Bookmark, CheckCircle2, Clock, Trophy, XCircle, TrendingUp, GraduationCap, ExternalLink } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Badge } from '@/components/ui/badge'
@@ -15,57 +15,120 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table'
 import { Label } from '@/components/ui/label'
-import { Input } from '@/components/ui/input'
 import { Switch } from '@/components/ui/switch'
-import { SavedGrantsDrawer } from '@/components/grants/SavedGrantsDrawer'
-import { useSavedGrants } from '@/hooks/useSavedGrants'
+import { useSavedGrants, SavedRecord } from '@/hooks/useSavedGrants'
+import { useGrants } from '@/hooks/useGrants'
+import { useScholarships } from '@/hooks/useScholarships'
 import { formatAmountRange, formatDeadline, getDeadlineUrgency, getDeadlineProgress, cn } from '@/lib/utils'
 import { GrantStatus } from '@/lib/types'
+
+interface Entry {
+  id: string
+  title: string
+  sponsor: string
+  amountMin: number
+  amountMax: number
+  amountNote: string | null
+  deadline: Date | null
+  createdAt: Date | null
+  href: string
+  isExternal: boolean
+  type: 'grant' | 'scholarship'
+  rec: SavedRecord
+}
 
 const statusConfig: Record<GrantStatus, { label: string; icon: React.ElementType; color: string }> = {
   saved: { label: 'Interested', icon: Bookmark, color: 'bg-secondary text-secondary-foreground' },
   applied: { label: 'Applied', icon: Clock, color: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400' },
-  awarded: { label: 'Awarded', icon: Trophy, color: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' },
-  rejected: { label: 'Rejected', icon: XCircle, color: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400' },
+  awarded: { label: 'Awarded 🏆', icon: Trophy, color: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' },
+  rejected: { label: 'Not Selected', icon: XCircle, color: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400' },
+}
+
+function fmtDate(iso: string | null | undefined): string {
+  if (!iso) return '—'
+  return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
 }
 
 export default function ProfilePage() {
-  const { isSaved, unsaveGrant } = useSavedGrants()
-  const savedGrantsWithData: Array<{ savedGrant: import('@/lib/types').SavedGrant; grant: import('@/lib/types').Grant }> = []
-  const updateStatus = (_id: string, _s: GrantStatus) => {}
-  const updateNotes = (_id: string, _n: string) => {}
+  const { records, isSaved, unsaveGrant, updateStatus } = useSavedGrants()
+  const { grants: allGrants } = useGrants()
+  const { scholarships: allScholarships } = useScholarships()
   const [emailAlerts, setEmailAlerts] = useState(true)
   const [weeklyDigest, setWeeklyDigest] = useState(false)
 
-  const byStatus = (status: GrantStatus) => savedGrantsWithData.filter((s) => s.savedGrant.status === status)
+  // Unified tracker entries — grants and scholarships combined
+  const entries: Entry[] = Object.values(records).flatMap((rec): Entry[] => {
+    const grant = allGrants.find((g) => g.id === rec.id)
+    if (grant) {
+      return [{
+        id: rec.id,
+        title: grant.title,
+        sponsor: grant.funder,
+        amountMin: grant.amountMin,
+        amountMax: grant.amountMax,
+        amountNote: grant.amountNote,
+        deadline: grant.deadline,
+        createdAt: grant.createdAt,
+        href: `/grants/${grant.id}`,
+        isExternal: false,
+        type: 'grant',
+        rec,
+      }]
+    }
+    const scholarship = allScholarships.find((s) => s.id === rec.id)
+    if (scholarship) {
+      return [{
+        id: rec.id,
+        title: scholarship.title,
+        sponsor: scholarship.sponsor,
+        amountMin: scholarship.amountMin,
+        amountMax: scholarship.amountMax,
+        amountNote: scholarship.amountNote,
+        deadline: scholarship.deadline,
+        createdAt: null,
+        href: scholarship.applyUrl,
+        isExternal: true,
+        type: 'scholarship',
+        rec,
+      }]
+    }
+    return []
+  })
 
-  const stats = [
-    { label: 'Saved', value: savedGrantsWithData.length, icon: Bookmark, color: 'text-primary' },
-    { label: 'Applied', value: byStatus('applied').length, icon: Clock, color: 'text-blue-500' },
-    { label: 'Awarded', value: byStatus('awarded').length, icon: Trophy, color: 'text-green-500' },
-    { label: 'Rejected', value: byStatus('rejected').length, icon: XCircle, color: 'text-red-500' },
-  ]
+  const byStatus = (status: GrantStatus) => entries.filter((e) => e.rec.status === status)
+  const savedItems = byStatus('saved')
+  const appliedItems = byStatus('applied')
+  const awardedItems = byStatus('awarded')
+  const rejectedItems = byStatus('rejected')
+  const inProgressItems = [...appliedItems, ...awardedItems, ...rejectedItems]
 
-  const closingSoon = savedGrantsWithData.filter(({ grant }) => {
-    const urgency = getDeadlineUrgency(grant.deadline)
+  const closingSoon = entries.filter(({ deadline }) => {
+    if (!deadline) return false
+    const urgency = getDeadlineUrgency(deadline)
     return urgency === 'critical' || urgency === 'warning'
   })
+
+  const stats = [
+    { label: 'Saved', value: entries.length, icon: Bookmark, color: 'text-primary' },
+    { label: 'Applied', value: appliedItems.length, icon: Clock, color: 'text-blue-500' },
+    { label: 'Awarded', value: awardedItems.length, icon: Trophy, color: 'text-green-500' },
+    { label: 'Not Selected', value: rejectedItems.length, icon: XCircle, color: 'text-red-500' },
+  ]
 
   return (
     <main className="mx-auto max-w-[1280px] px-4 sm:px-6 py-8 space-y-6">
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
-          <h1 className="text-2xl font-bold">My Grants Dashboard</h1>
-          <p className="text-muted-foreground text-sm mt-1">Track your saved grants and application progress.</p>
+          <h1 className="text-2xl font-bold">My Dashboard</h1>
+          <p className="text-muted-foreground text-sm mt-1">Track your saved grants, scholarships, and application history.</p>
         </div>
-        <div className="flex gap-2">
-          <SavedGrantsDrawer
-            savedGrantsWithData={savedGrantsWithData}
-            onUnsave={unsaveGrant}
-            onUpdateStatus={updateStatus}
-          />
-          <Button nativeButton={false} render={<Link href="/search" />}>
-            Find More Grants
+        <div className="flex gap-2 flex-wrap">
+          <Button nativeButton={false} render={<Link href="/search" />} variant="outline">
+            Find Grants
+          </Button>
+          <Button nativeButton={false} render={<Link href="/scholarships" />} variant="outline">
+            <GraduationCap className="size-3.5 mr-1.5" />
+            Scholarships
           </Button>
         </div>
       </div>
@@ -91,36 +154,32 @@ export default function ProfilePage() {
           <CardHeader className="pb-3">
             <CardTitle className="text-sm flex items-center gap-2 text-amber-800 dark:text-amber-400">
               <Clock className="size-4" />
-              Deadline Alerts — {closingSoon.length} grant{closingSoon.length > 1 ? 's' : ''} closing soon
+              Deadline Alerts — {closingSoon.length} item{closingSoon.length > 1 ? 's' : ''} closing soon
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
-            {closingSoon.map(({ grant }) => {
-              const urgency = getDeadlineUrgency(grant.deadline)
-              const progress = getDeadlineProgress(grant.deadline, grant.createdAt)
+            {closingSoon.map(({ id, title, deadline, createdAt }) => {
+              const urgency = deadline ? getDeadlineUrgency(deadline) : 'normal'
+              const progress = deadline && createdAt ? getDeadlineProgress(deadline, createdAt) : 0
               return (
-                <div key={grant.id} className="space-y-1">
+                <div key={id} className="space-y-1">
                   <div className="flex items-center justify-between">
-                    <Link href={`/grants/${grant.id}`} className="text-sm font-medium hover:text-primary line-clamp-1">
-                      {grant.title}
-                    </Link>
-                    <span
-                      className={cn(
-                        'text-xs font-medium ml-2 shrink-0',
-                        urgency === 'critical' ? 'text-destructive' : 'text-amber-600 dark:text-amber-400'
-                      )}
-                    >
-                      {formatDeadline(grant.deadline)}
+                    <p className="text-sm font-medium line-clamp-1">{title}</p>
+                    <span className={cn('text-xs font-medium ml-2 shrink-0',
+                      urgency === 'critical' ? 'text-destructive' : 'text-amber-600 dark:text-amber-400'
+                    )}>
+                      {deadline ? formatDeadline(deadline) : ''}
                     </span>
                   </div>
-                  <Progress
-                    value={progress}
-                    className={cn(
-                      'h-1',
-                      urgency === 'critical' && '[&>div]:bg-destructive',
-                      urgency === 'warning' && '[&>div]:bg-amber-500'
-                    )}
-                  />
+                  {createdAt && (
+                    <Progress
+                      value={progress}
+                      className={cn('h-1',
+                        urgency === 'critical' && '[&>div]:bg-destructive',
+                        urgency === 'warning' && '[&>div]:bg-amber-500'
+                      )}
+                    />
+                  )}
                 </div>
               )
             })}
@@ -130,50 +189,71 @@ export default function ProfilePage() {
 
       <Tabs defaultValue="saved">
         <TabsList>
-          <TabsTrigger value="saved">Saved ({savedGrantsWithData.length})</TabsTrigger>
-          <TabsTrigger value="tracker">Tracker</TabsTrigger>
+          <TabsTrigger value="saved">
+            Saved ({savedItems.length})
+          </TabsTrigger>
+          <TabsTrigger value="tracker">
+            Application Tracker ({inProgressItems.length})
+          </TabsTrigger>
           <TabsTrigger value="alerts">Alerts</TabsTrigger>
           <TabsTrigger value="settings">Settings</TabsTrigger>
         </TabsList>
 
-        {/* Saved grants */}
+        {/* Saved tab — items not yet applied */}
         <TabsContent value="saved" className="mt-4">
-          {savedGrantsWithData.length === 0 ? (
+          {savedItems.length === 0 ? (
             <div className="py-24 text-center border rounded-lg">
               <Bookmark className="size-12 mx-auto text-muted-foreground/30 mb-4" />
-              <p className="font-semibold">No saved grants</p>
+              <p className="font-semibold">Nothing saved yet</p>
               <p className="text-sm text-muted-foreground mt-1 mb-4">
-                Start exploring grants and save the ones that interest you.
+                Save grants or scholarships to track them here.
               </p>
-              <Button nativeButton={false} render={<Link href="/search" />}>Browse Grants</Button>
+              <div className="flex gap-2 justify-center">
+                <Button nativeButton={false} render={<Link href="/search" />} variant="outline">Browse Grants</Button>
+                <Button nativeButton={false} render={<Link href="/scholarships" />} variant="outline">Browse Scholarships</Button>
+              </div>
             </div>
           ) : (
             <ScrollArea className="h-[500px]">
               <div className="space-y-3 pr-2">
-                {savedGrantsWithData.map(({ savedGrant, grant }) => {
-                  const urgency = getDeadlineUrgency(grant.deadline)
-                  const progress = getDeadlineProgress(grant.deadline, grant.createdAt)
-                  const status = statusConfig[savedGrant.status]
+                {savedItems.map((entry) => {
+                  const urgency = entry.deadline ? getDeadlineUrgency(entry.deadline) : 'normal'
+                  const progress = entry.deadline && entry.createdAt
+                    ? getDeadlineProgress(entry.deadline, entry.createdAt) : 0
                   return (
-                    <Card key={grant.id}>
+                    <Card key={entry.id}>
                       <CardContent className="py-4 space-y-3">
                         <div className="flex items-start justify-between gap-3">
                           <div className="flex-1 min-w-0">
-                            <Link
-                              href={`/grants/${grant.id}`}
-                              className="font-medium text-sm hover:text-primary transition-colors line-clamp-1"
-                            >
-                              {grant.title}
-                            </Link>
-                            <p className="text-xs text-muted-foreground mt-0.5">{grant.funder}</p>
+                            <div className="flex items-center gap-1.5">
+                              {entry.type === 'scholarship' && (
+                                <GraduationCap className="size-3.5 text-[#6B0F1A] shrink-0" />
+                              )}
+                              {entry.isExternal ? (
+                                <a
+                                  href={entry.href}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="font-medium text-sm hover:text-primary transition-colors line-clamp-1"
+                                >
+                                  {entry.title}
+                                </a>
+                              ) : (
+                                <Link
+                                  href={entry.href}
+                                  className="font-medium text-sm hover:text-primary transition-colors line-clamp-1"
+                                >
+                                  {entry.title}
+                                </Link>
+                              )}
+                            </div>
+                            <p className="text-xs text-muted-foreground mt-0.5">{entry.sponsor}</p>
+                            <p className="text-xs text-muted-foreground">Saved {fmtDate(entry.rec.savedAt)}</p>
                           </div>
                           <div className="flex items-center gap-2 shrink-0">
-                            <span className={cn('inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium', status.color)}>
-                              {status.label}
-                            </span>
                             <Select
-                              value={savedGrant.status}
-                              onValueChange={(v) => updateStatus(grant.id, v as GrantStatus)}
+                              value={entry.rec.status}
+                              onValueChange={(v) => updateStatus(entry.id, v as GrantStatus)}
                             >
                               <SelectTrigger className="h-6 w-28 text-xs px-2">
                                 <SelectValue />
@@ -182,44 +262,60 @@ export default function ProfilePage() {
                                 <SelectItem value="saved">Interested</SelectItem>
                                 <SelectItem value="applied">Applied</SelectItem>
                                 <SelectItem value="awarded">Awarded</SelectItem>
-                                <SelectItem value="rejected">Rejected</SelectItem>
+                                <SelectItem value="rejected">Not Selected</SelectItem>
                               </SelectContent>
                             </Select>
                           </div>
                         </div>
                         <div className="flex items-center justify-between text-xs text-muted-foreground">
-                          <span>{formatAmountRange(grant.amountMin, grant.amountMax)}</span>
+                          <span>
+                            {entry.amountNote && entry.amountMin === 0 && entry.amountMax === 0
+                              ? entry.amountNote
+                              : formatAmountRange(entry.amountMin, entry.amountMax)}
+                          </span>
                           <span className={cn(
                             urgency === 'critical' && 'text-destructive font-medium',
                             urgency === 'warning' && 'text-amber-600 font-medium'
                           )}>
-                            {formatDeadline(grant.deadline)}
+                            {entry.deadline ? formatDeadline(entry.deadline) : 'Rolling deadline'}
                           </span>
                         </div>
-                        <Progress
-                          value={progress}
-                          className={cn(
-                            'h-1',
-                            urgency === 'normal' && '[&>div]:bg-green-500',
-                            urgency === 'warning' && '[&>div]:bg-amber-500',
-                            urgency === 'critical' && '[&>div]:bg-destructive'
-                          )}
-                        />
+                        {entry.deadline && entry.createdAt && (
+                          <Progress
+                            value={progress}
+                            className={cn('h-1',
+                              urgency === 'normal' && '[&>div]:bg-green-500',
+                              urgency === 'warning' && '[&>div]:bg-amber-500',
+                              urgency === 'critical' && '[&>div]:bg-destructive'
+                            )}
+                          />
+                        )}
                         <div className="flex gap-2">
-                          <Button
-                            nativeButton={false}
-                            render={<Link href={`/grants/${grant.id}`} />}
-                            size="sm"
-                            variant="outline"
-                            className="h-7 text-xs flex-1"
-                          >
-                            View Details
-                          </Button>
+                          {entry.isExternal ? (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="h-7 text-xs flex-1 gap-1"
+                              onClick={() => window.open(entry.href, '_blank', 'noopener,noreferrer')}
+                            >
+                              Apply Now <ExternalLink className="size-3" />
+                            </Button>
+                          ) : (
+                            <Button
+                              nativeButton={false}
+                              render={<Link href={entry.href} />}
+                              size="sm"
+                              variant="outline"
+                              className="h-7 text-xs flex-1"
+                            >
+                              View Details
+                            </Button>
+                          )}
                           <Button
                             size="sm"
                             variant="ghost"
                             className="h-7 text-xs text-muted-foreground"
-                            onClick={() => unsaveGrant(grant.id)}
+                            onClick={() => unsaveGrant(entry.id)}
                           >
                             Remove
                           </Button>
@@ -236,56 +332,107 @@ export default function ProfilePage() {
         {/* Application Tracker */}
         <TabsContent value="tracker" className="mt-4">
           <Card>
-            <CardContent className="pt-4">
-              {savedGrantsWithData.length === 0 ? (
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base flex items-center gap-2">
+                <TrendingUp className="size-4" />
+                Application History
+              </CardTitle>
+              <p className="text-xs text-muted-foreground">
+                Grants and scholarships you&apos;ve marked as Applied, Awarded, or Not Selected.
+              </p>
+            </CardHeader>
+            <CardContent>
+              {inProgressItems.length === 0 ? (
                 <div className="py-12 text-center">
-                  <TrendingUp className="size-10 mx-auto text-muted-foreground/30 mb-3" />
-                  <p className="text-sm text-muted-foreground">No grants in tracker yet.</p>
+                  <CheckCircle2 className="size-10 mx-auto text-muted-foreground/30 mb-3" />
+                  <p className="text-sm text-muted-foreground">No applications tracked yet.</p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Save a grant or scholarship, then mark it as &quot;Applied&quot; to track it here.
+                  </p>
                 </div>
               ) : (
                 <div className="overflow-x-auto">
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead>Grant</TableHead>
-                        <TableHead>Amount</TableHead>
-                        <TableHead>Deadline</TableHead>
+                        <TableHead>Title</TableHead>
+                        <TableHead>Type</TableHead>
+                        <TableHead>Applied</TableHead>
                         <TableHead>Status</TableHead>
+                        <TableHead>Outcome Date</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {savedGrantsWithData.map(({ savedGrant, grant }) => {
-                        const urgency = getDeadlineUrgency(grant.deadline)
-                        const conf = statusConfig[savedGrant.status]
+                      {inProgressItems.map((entry) => {
+                        const conf = statusConfig[entry.rec.status]
                         return (
-                          <TableRow key={grant.id}>
+                          <TableRow key={entry.id}>
                             <TableCell>
-                              <Link href={`/grants/${grant.id}`} className="font-medium text-sm hover:text-primary line-clamp-1 max-w-xs block">
-                                {grant.title}
-                              </Link>
-                              <span className="text-xs text-muted-foreground">{grant.funder}</span>
+                              {entry.isExternal ? (
+                                <a
+                                  href={entry.href}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="font-medium text-sm hover:text-primary line-clamp-1 max-w-xs flex items-center gap-1"
+                                >
+                                  {entry.title}
+                                  <ExternalLink className="size-3 shrink-0" />
+                                </a>
+                              ) : (
+                                <Link
+                                  href={entry.href}
+                                  className="font-medium text-sm hover:text-primary line-clamp-1 max-w-xs block"
+                                >
+                                  {entry.title}
+                                </Link>
+                              )}
+                              <span className="text-xs text-muted-foreground">{entry.sponsor}</span>
+                            </TableCell>
+                            <TableCell>
+                              <Badge variant="outline" className="text-xs capitalize">
+                                {entry.type}
+                              </Badge>
                             </TableCell>
                             <TableCell className="text-sm whitespace-nowrap">
-                              {formatAmountRange(grant.amountMin, grant.amountMax)}
-                            </TableCell>
-                            <TableCell>
-                              <span className={cn('text-sm whitespace-nowrap',
-                                urgency === 'critical' && 'text-destructive font-medium',
-                                urgency === 'warning' && 'text-amber-600 font-medium'
-                              )}>
-                                {formatDeadline(grant.deadline)}
-                              </span>
+                              {fmtDate(entry.rec.appliedAt)}
                             </TableCell>
                             <TableCell>
                               <span className={cn('inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium', conf.color)}>
                                 {conf.label}
                               </span>
                             </TableCell>
+                            <TableCell className="text-sm whitespace-nowrap">
+                              {(entry.rec.status === 'awarded' || entry.rec.status === 'rejected')
+                                ? fmtDate(entry.rec.resolvedAt)
+                                : '—'}
+                            </TableCell>
                           </TableRow>
                         )
                       })}
                     </TableBody>
                   </Table>
+                </div>
+              )}
+
+              {/* Win summary */}
+              {awardedItems.length > 0 && (
+                <div className="mt-6 p-4 rounded-lg bg-green-50 dark:bg-green-900/10 border border-green-200 dark:border-green-800/40">
+                  <div className="flex items-center gap-2 mb-3">
+                    <Trophy className="size-4 text-green-600" />
+                    <p className="font-semibold text-sm text-green-800 dark:text-green-400">
+                      Congratulations! You&apos;ve been awarded {awardedItems.length} grant{awardedItems.length > 1 ? 's' : ''}.
+                    </p>
+                  </div>
+                  <div className="space-y-2">
+                    {awardedItems.map((entry) => (
+                      <div key={entry.id} className="flex items-center justify-between text-sm">
+                        <span className="font-medium line-clamp-1 max-w-xs">{entry.title}</span>
+                        <div className="text-right text-xs text-muted-foreground ml-4 shrink-0">
+                          <span>Awarded {fmtDate(entry.rec.resolvedAt)}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )}
             </CardContent>
@@ -314,7 +461,7 @@ export default function ProfilePage() {
               </div>
               <Separator />
               <p className="text-xs text-muted-foreground">
-                Currently tracking {closingSoon.length} grant{closingSoon.length !== 1 ? 's' : ''} with upcoming deadlines.
+                Currently tracking {closingSoon.length} item{closingSoon.length !== 1 ? 's' : ''} with upcoming deadlines.
               </p>
             </CardContent>
           </Card>
@@ -325,35 +472,12 @@ export default function ProfilePage() {
           <Card>
             <CardHeader><CardTitle className="text-base">Profile Settings</CardTitle></CardHeader>
             <CardContent className="space-y-4 max-w-md">
-              <div className="space-y-1.5">
-                <Label htmlFor="org-name">Organization Name</Label>
-                <Input id="org-name" placeholder="Your organization or name" />
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="org-type">Organization Type</Label>
-                <Select defaultValue="nonprofit">
-                  <SelectTrigger id="org-type">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="nonprofit">Nonprofit (501c3)</SelectItem>
-                    <SelectItem value="individual">Individual</SelectItem>
-                    <SelectItem value="for-profit">For-Profit Business</SelectItem>
-                    <SelectItem value="education">Educational Institution</SelectItem>
-                    <SelectItem value="government">Government Entity</SelectItem>
-                    <SelectItem value="faith-based">Faith-Based Organization</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="location">Location</Label>
-                <Input id="location" placeholder="City, State" />
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="email">Email for Alerts</Label>
-                <Input id="email" type="email" placeholder="you@example.com" />
-              </div>
-              <Button>Save Settings</Button>
+              <p className="text-sm text-muted-foreground">
+                Update your profile details to get better-matched grants and scholarships.
+              </p>
+              <Button nativeButton={false} render={<Link href="/auth/signup" />} variant="outline">
+                Edit Profile
+              </Button>
             </CardContent>
           </Card>
         </TabsContent>
