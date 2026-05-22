@@ -17,18 +17,37 @@ function LoginForm() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(
+    searchParams.get('error') ?? null
+  )
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setLoading(true)
     setError(null)
 
-    const supabase = createClient()
-    const { error } = await supabase.auth.signInWithPassword({ email, password })
+    let supabase: ReturnType<typeof createClient>
+    try {
+      supabase = createClient()
+    } catch {
+      setError('Could not connect to auth service. Check your environment configuration.')
+      setLoading(false)
+      return
+    }
 
-    if (error) {
-      setError(error.message)
+    try {
+      const { error } = await supabase.auth.signInWithPassword({ email, password })
+      if (error) {
+        setError(
+          error.message === 'Email not confirmed'
+            ? 'Please confirm your email first — check your inbox (and spam folder) for the confirmation link.'
+            : error.message
+        )
+        setLoading(false)
+        return
+      }
+    } catch {
+      setError('An unexpected error occurred. Please try again.')
       setLoading(false)
       return
     }

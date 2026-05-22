@@ -83,7 +83,15 @@ export default function SignupPage() {
       metadata.field_of_study = fieldOfStudy || null
     }
 
-    const supabase = createClient()
+    let supabase: ReturnType<typeof createClient>
+    try {
+      supabase = createClient()
+    } catch {
+      setError('Could not connect to auth service. Check your environment configuration.')
+      setLoading(false)
+      return
+    }
+
     const { error } = await supabase.auth.signUp({
       email,
       password,
