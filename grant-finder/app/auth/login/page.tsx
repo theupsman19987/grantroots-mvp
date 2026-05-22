@@ -29,8 +29,8 @@ function LoginForm() {
     let supabase: ReturnType<typeof createClient>
     try {
       supabase = createClient()
-    } catch {
-      setError('Could not connect to auth service. Check your environment configuration.')
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Could not connect to auth service.')
       setLoading(false)
       return
     }

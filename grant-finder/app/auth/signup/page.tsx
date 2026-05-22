@@ -86,8 +86,8 @@ export default function SignupPage() {
     let supabase: ReturnType<typeof createClient>
     try {
       supabase = createClient()
-    } catch {
-      setError('Could not connect to auth service. Check your environment configuration.')
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Could not connect to auth service.')
       setLoading(false)
       return
     }
@@ -207,6 +207,7 @@ export default function SignupPage() {
                 id="password"
                 type="password"
                 placeholder="8+ characters"
+                autoComplete="new-password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
