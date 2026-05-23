@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef, Suspense } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { toast } from 'sonner'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -46,18 +46,9 @@ function SearchResults() {
     toggleAgency,
   } = useGrantSearch(initialFilters)
 
-  const { user, userState, loading: authLoading } = useAuth()
+  const { user, loading: authLoading } = useAuth()
   const { grants: allGrants } = useGrants()
   const { isSaved, saveGrant, unsaveGrant } = useSavedGrants()
-
-  // Auto-apply user's home state as a geographic filter on first load
-  const hasAutoApplied = useRef(false)
-  useEffect(() => {
-    if (!authLoading && userState && !hasAutoApplied.current && filters.geographicFocus.length === 0) {
-      updateFilter('geographicFocus', [userState])
-      hasAutoApplied.current = true
-    }
-  }, [authLoading, userState])
 
   const totalPages = Math.ceil(results.length / PAGE_SIZE)
   const pageResults = results.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
