@@ -107,29 +107,8 @@ export default function SignupPage() {
       return
     }
 
-    setSuccess(true)
+    router.push('/')
     setLoading(false)
-  }
-
-  if (success) {
-    return (
-      <main className="min-h-[80vh] flex items-center justify-center px-4">
-        <div className="w-full max-w-sm space-y-4 text-center">
-          <CheckCircle className="size-12 mx-auto text-green-500" />
-          <h1 className="text-2xl font-bold">Check your email</h1>
-          <p className="text-muted-foreground text-sm">
-            We sent a confirmation link to <strong>{email}</strong>. Click it to activate your account.
-          </p>
-          <Button
-            variant="outline"
-            className="w-full"
-            onClick={() => router.push('/')}
-          >
-            Back to Home
-          </Button>
-        </div>
-      </main>
-    )
   }
 
   return (
