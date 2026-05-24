@@ -36,7 +36,7 @@ export default function UpdatePasswordPage() {
 
     setSuccess(true)
     setLoading(false)
-    setTimeout(() => router.push('/profile'), 2000)
+    setTimeout(() => router.push('/'), 2000)
   }
 
   if (success) {

@@ -71,11 +71,11 @@ export function SiteHeader() {
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="text-[#6B0F1A] hover:bg-[#A07830]/20"
+                    className="text-[#6B0F1A] hover:bg-[#A07830]/20 gap-1.5"
                     onClick={handleSignOut}
-                    aria-label="Sign out"
                   >
                     <LogOut className="size-3.5" />
+                    Sign out
                   </Button>
                 </div>
               ) : (

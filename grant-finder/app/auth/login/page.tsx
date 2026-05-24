@@ -38,11 +38,7 @@ function LoginForm() {
     try {
       const { error } = await supabase.auth.signInWithPassword({ email, password })
       if (error) {
-        setError(
-          error.message === 'Email not confirmed'
-            ? 'Please confirm your email first — check your inbox (and spam folder) for the confirmation link.'
-            : error.message
-        )
+        setError(error.message)
         setLoading(false)
         return
       }

@@ -1,7 +1,8 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { Bookmark, CheckCircle2, Clock, Trophy, XCircle, TrendingUp, GraduationCap, ExternalLink } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -19,6 +20,7 @@ import { Switch } from '@/components/ui/switch'
 import { useSavedGrants, SavedRecord } from '@/hooks/useSavedGrants'
 import { useGrants } from '@/hooks/useGrants'
 import { useScholarships } from '@/hooks/useScholarships'
+import { useAuth } from '@/hooks/useAuth'
 import { formatAmountRange, formatDeadline, getDeadlineUrgency, getDeadlineProgress, cn } from '@/lib/utils'
 import { GrantStatus } from '@/lib/types'
 
@@ -50,11 +52,19 @@ function fmtDate(iso: string | null | undefined): string {
 }
 
 export default function ProfilePage() {
+  const router = useRouter()
+  const { user, loading: authLoading } = useAuth()
   const { records, isSaved, unsaveGrant, updateStatus } = useSavedGrants()
   const { grants: allGrants } = useGrants()
   const { scholarships: allScholarships } = useScholarships()
   const [emailAlerts, setEmailAlerts] = useState(true)
   const [weeklyDigest, setWeeklyDigest] = useState(false)
+
+  useEffect(() => {
+    if (!authLoading && !user) router.replace('/auth/login?next=/profile')
+  }, [authLoading, user, router])
+
+  if (authLoading || !user) return null
 
   // Unified tracker entries — grants and scholarships combined
   const entries: Entry[] = Object.values(records).flatMap((rec): Entry[] => {
