@@ -2,7 +2,7 @@
 
 import { Suspense, useState } from 'react'
 import Link from 'next/link'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useSearchParams } from 'next/navigation'
 import { Loader2, LogIn } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -10,7 +10,6 @@ import { Label } from '@/components/ui/label'
 import { createClient } from '@/lib/supabase/client'
 
 function LoginForm() {
-  const router = useRouter()
   const searchParams = useSearchParams()
   const next = searchParams.get('next') ?? '/'
 
@@ -35,21 +34,24 @@ function LoginForm() {
       return
     }
 
+    let accountType: string | undefined
     try {
-      const { error } = await supabase.auth.signInWithPassword({ email, password })
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password })
       if (error) {
         setError(error.message)
         setLoading(false)
         return
       }
+      accountType = data.user?.user_metadata?.account_type
     } catch {
       setError('An unexpected error occurred. Please try again.')
       setLoading(false)
       return
     }
 
-    router.push(next)
-    router.refresh()
+    // Students land on Scholarships by default; others go to `next`
+    const destination = accountType === 'student' && next === '/' ? '/scholarships' : next
+    window.location.href = destination
   }
 
   return (

@@ -11,6 +11,9 @@ interface AuthState {
   schoolType: 'college' | 'trade' | null
   gpa: string | null
   fieldOfStudy: string | null
+  firstName: string | null
+  lastName: string | null
+  orgName: string | null
   loading: boolean
   signOut: () => Promise<void>
 }
@@ -51,6 +54,9 @@ export function useAuth(): AuthState {
   const schoolType = (meta.school_type as 'college' | 'trade') ?? null
   const gpa = (meta.gpa as string) ?? null
   const fieldOfStudy = (meta.field_of_study as string) ?? null
+  const firstName = (meta.first_name as string) ?? null
+  const lastName = (meta.last_name as string) ?? null
+  const orgName = (meta.org_name as string) ?? null
 
-  return { user, userState, accountType, schoolType, gpa, fieldOfStudy, loading, signOut }
+  return { user, userState, accountType, schoolType, gpa, fieldOfStudy, firstName, lastName, orgName, loading, signOut }
 }

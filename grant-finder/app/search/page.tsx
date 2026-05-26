@@ -196,6 +196,14 @@ function SearchResults() {
                 <p className="text-sm text-muted-foreground mt-1">
                   Try adjusting your filters or search query.
                 </p>
+                {filters.query && /scholar/i.test(filters.query) && (
+                  <p className="text-sm text-muted-foreground mt-3">
+                    Looking for student scholarships?{' '}
+                    <a href="/scholarships" className="text-[#6B0F1A] underline underline-offset-2 hover:opacity-80">
+                      Visit the Scholarships page →
+                    </a>
+                  </p>
+                )}
               </div>
             ) : view === 'card' ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">

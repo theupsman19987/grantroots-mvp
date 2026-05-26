@@ -2,7 +2,6 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
 import { Loader2, UserPlus, GraduationCap, Building2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -38,8 +37,6 @@ type AccountType = 'student' | 'organization' | ''
 type SchoolType = 'college' | 'trade' | ''
 
 export default function SignupPage() {
-  const router = useRouter()
-
   // Core fields
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -50,6 +47,11 @@ export default function SignupPage() {
   const [schoolType, setSchoolType] = useState<SchoolType>('')
   const [gpa, setGpa] = useState('')
   const [fieldOfStudy, setFieldOfStudy] = useState('')
+
+  // Organization-only fields
+  const [firstName, setFirstName] = useState('')
+  const [lastName, setLastName] = useState('')
+  const [orgName, setOrgName] = useState('')
 
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -74,12 +76,18 @@ export default function SignupPage() {
     const metadata: Record<string, string | null> = {
       account_type: accountType,
       state: state || null,
+      first_name: firstName || null,
+      last_name: lastName || null,
     }
 
     if (accountType === 'student') {
       metadata.school_type = schoolType || null
       metadata.gpa = gpa || null
       metadata.field_of_study = fieldOfStudy || null
+    }
+
+    if (accountType === 'organization') {
+      metadata.org_name = orgName || null
     }
 
     let supabase: ReturnType<typeof createClient>
@@ -106,8 +114,7 @@ export default function SignupPage() {
       return
     }
 
-    router.push('/')
-    setLoading(false)
+    window.location.href = '/profile'
   }
 
   return (
@@ -213,6 +220,60 @@ export default function SignupPage() {
                 We&apos;ll show {accountType === 'student' ? 'scholarships' : 'grants'} relevant to your area by default.
               </p>
             </div>
+
+            {/* Name fields — shown for both account types */}
+            {accountType && (
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <Label htmlFor="firstName">
+                    First Name <span className="text-muted-foreground font-normal">(optional)</span>
+                  </Label>
+                  <Input
+                    id="firstName"
+                    type="text"
+                    placeholder="Jane"
+                    value={firstName}
+                    onChange={(e) => setFirstName(e.target.value)}
+                    autoComplete="given-name"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="lastName">
+                    Last Name <span className="text-muted-foreground font-normal">(optional)</span>
+                  </Label>
+                  <Input
+                    id="lastName"
+                    type="text"
+                    placeholder="Smith"
+                    value={lastName}
+                    onChange={(e) => setLastName(e.target.value)}
+                    autoComplete="family-name"
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* Organization-only fields */}
+            {accountType === 'organization' && (
+              <div className="space-y-4 pt-1 border-t border-[#A07830]/30">
+                <p className="text-xs font-semibold text-[#6B0F1A] uppercase tracking-wide pt-1">Organization Details</p>
+
+                <div className="space-y-1.5">
+                  <Label htmlFor="orgName">
+                    Organization Name <span className="text-muted-foreground font-normal">(optional)</span>
+                  </Label>
+                  <Input
+                    id="orgName"
+                    type="text"
+                    placeholder="e.g. Community Hope Foundation"
+                    value={orgName}
+                    onChange={(e) => setOrgName(e.target.value)}
+                    autoComplete="organization"
+                  />
+                  <p className="text-xs text-muted-foreground">Your nonprofit, community group, or faith-based org.</p>
+                </div>
+              </div>
+            )}
 
             {/* Student-only fields */}
             {accountType === 'student' && (
