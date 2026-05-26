@@ -171,57 +171,7 @@ export default function SignupPage() {
               </div>
             </div>
 
-            {/* Email */}
-            <div className="space-y-1.5">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="you@example.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                autoComplete="email"
-              />
-            </div>
-
-            {/* Password */}
-            <div className="space-y-1.5">
-              <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
-                type="password"
-                placeholder="8+ characters"
-                autoComplete="new-password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
-              <p className="text-xs text-muted-foreground">Minimum 8 characters</p>
-            </div>
-
-            {/* State */}
-            <div className="space-y-1.5">
-              <Label htmlFor="state">
-                Your State <span className="text-muted-foreground font-normal">(optional)</span>
-              </Label>
-              <select
-                id="state"
-                value={state}
-                onChange={(e) => setState(e.target.value)}
-                className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[#6B0F1A]/30 focus:border-[#6B0F1A] text-foreground"
-              >
-                <option value="">Select your state…</option>
-                {US_STATES.map((s) => (
-                  <option key={s} value={s}>{s}</option>
-                ))}
-              </select>
-              <p className="text-xs text-muted-foreground">
-                We&apos;ll show {accountType === 'student' ? 'scholarships' : 'grants'} relevant to your area by default.
-              </p>
-            </div>
-
-            {/* Name fields — shown for both account types */}
+            {/* Name fields — right after account type selection */}
             {accountType && (
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1.5">
@@ -348,6 +298,56 @@ export default function SignupPage() {
                 </div>
               </div>
             )}
+
+            {/* Email */}
+            <div className="space-y-1.5">
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                type="email"
+                placeholder="you@example.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                autoComplete="email"
+              />
+            </div>
+
+            {/* Password */}
+            <div className="space-y-1.5">
+              <Label htmlFor="password">Password</Label>
+              <Input
+                id="password"
+                type="password"
+                placeholder="8+ characters"
+                autoComplete="new-password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
+              <p className="text-xs text-muted-foreground">Minimum 8 characters</p>
+            </div>
+
+            {/* State */}
+            <div className="space-y-1.5">
+              <Label htmlFor="state">
+                Your State <span className="text-muted-foreground font-normal">(optional)</span>
+              </Label>
+              <select
+                id="state"
+                value={state}
+                onChange={(e) => setState(e.target.value)}
+                className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[#6B0F1A]/30 focus:border-[#6B0F1A] text-foreground"
+              >
+                <option value="">Select your state…</option>
+                {US_STATES.map((s) => (
+                  <option key={s} value={s}>{s}</option>
+                ))}
+              </select>
+              <p className="text-xs text-muted-foreground">
+                We&apos;ll show {accountType === 'student' ? 'scholarships' : 'grants'} relevant to your area by default.
+              </p>
+            </div>
 
             {error && (
               <p className="text-sm text-destructive bg-destructive/10 rounded-md px-3 py-2">{error}</p>
