@@ -155,6 +155,19 @@ async function runSync() {
   logger.info('=== Grant sync started ===');
   logger.info(`Keywords: ${KEYWORDS.length}  ×  Statuses: ${STATUSES.join(', ')}`);
 
+  // Fast-fail: verify DB connectivity before touching any grants.
+  // Catches bad/rotated credentials immediately rather than accumulating
+  // 100+ error logs and triggering PgBouncer's auth circuit breaker.
+  try {
+    const { pool } = await import('./db.js');
+    const client = await pool().connect();
+    await client.query('SELECT 1');
+    client.release();
+    logger.info('DB connection OK');
+  } catch (err) {
+    throw new Error(`DB connectivity check failed — verify POSTGRES_URL_NON_POOLING in Vercel env vars: ${err.message}`);
+  }
+
   const results = { gov: 0, candid: 0, upserted: 0, errors: [] };
   const stats = { inserts: 0, updates: 0, enriched: 0, enrichErrors: 0, expired: 0, missingFields: 0, budgetExhausted: false };
   let budgetExhausted = false;

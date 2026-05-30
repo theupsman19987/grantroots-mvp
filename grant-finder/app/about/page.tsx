@@ -29,31 +29,30 @@ export default function AboutPage() {
     <main className="mx-auto max-w-[800px] px-4 sm:px-6 py-16 space-y-8">
       <h1 className="text-4xl font-black text-[#6B0F1A]">About Urban Grantroots</h1>
 
-      <p className="text-lg text-[#4a2e09] leading-relaxed">
-        Urban Grantroots exists to open real pathways to federal funding for the organizations
-        doing the hardest work in their communities — nonprofits, reentry programs, youth
-        organizations, schools, and grassroots leaders.
-      </p>
-
-      <p className="text-lg text-[#4a2e09] leading-relaxed">
-        Too often, the groups that need funding most are the last to find it. Grant databases are
-        complicated, deadlines get missed, and the application process can feel designed for
-        organizations with full-time grant writers — not small teams running programs on the
-        ground. We built Urban Grantroots to change that.
-      </p>
-
-      <p className="text-lg text-[#4a2e09] leading-relaxed">
-        We aggregate federal grants directly from Grants.gov into a single, searchable database —
-        organized around the causes that matter to underserved communities: community development,
-        education, housing, health, reentry and justice, youth programs, and more. Every grant
-        is free to access. No paywalls, no subscriptions, ever.
-      </p>
-
-      <div className="border-l-4 border-[#6B0F1A] pl-6 space-y-2">
-        <p className="text-xl font-bold italic text-[#6B0F1A]">
-          &#8220;Find grants. Build communities. Grow roots.&#8221;
+      <div className="space-y-3">
+        <h2 className="text-2xl font-bold text-[#6B0F1A]">How Urban GrantRoots Helps Communities Rise</h2>
+        <p className="text-lg text-[#4a2e09] leading-relaxed">
+          Urban GrantRoots was created to help underserved communities, nonprofits, schools, youth
+          leaders, and grassroots organizations connect with real opportunities that can create
+          lasting impact. Our platform helps users discover verified grants, scholarships, workforce
+          programs, and funding resources directly from trusted sources like Grants.gov and official
+          funder websites, while also allowing organizations to track applications, deadlines,
+          awards, and progress in one place. Because when communities finally gain access to
+          opportunity, real transformation begins.
         </p>
-        <p className="text-sm text-[#4a2e09]">Federal grants. Made accessible. For every community.</p>
+      </div>
+
+      <div className="space-y-3">
+        <h2 className="text-2xl font-bold text-[#6B0F1A]">What Is Grants.gov and Why Does It Matter?</h2>
+        <p className="text-lg text-[#4a2e09] leading-relaxed">
+          Grants.gov is the official gateway for federal grant opportunities that help nonprofits,
+          schools, youth programs, and community organizations access real funding support. Before
+          applying, most organizations must first register with SAM.gov, create a verified
+          Grants.gov account, and complete detailed application requirements that can often feel
+          overwhelming for smaller or underserved communities. Urban GrantRoots helps simplify that
+          journey by helping organizations discover the right opportunities first, saving valuable
+          time, energy, and resources before starting the application process.
+        </p>
       </div>
 
       <div className="rounded-xl bg-[#FDF8EE] border border-[#A07830]/40 p-6 space-y-3">

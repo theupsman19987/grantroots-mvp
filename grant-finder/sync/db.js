@@ -14,10 +14,29 @@ let _pool = null;
 
 function pool() {
   if (!_pool) {
+    // Prefer the direct (non-pooling) Supabase URL for cron/batch work — avoids PgBouncer's
+    // auth circuit breaker which fires after repeated connection attempts over a long run.
+    // POSTGRES_URL_NON_POOLING is set by Vercel's Supabase integration (port 5432 direct).
+    const connString =
+      process.env.POSTGRES_URL_NON_POOLING ??
+      process.env.DATABASE_URL ??
+      process.env.POSTGRES_URL;
+    if (!connString) throw new Error('No database connection string: set POSTGRES_URL_NON_POOLING or DATABASE_URL');
+    const url = new URL(connString);
     _pool = new Pool({
-      connectionString: process.env.DATABASE_URL,
-      max: 5,
-      idleTimeoutMillis: 30_000,
+      host:                     url.hostname,
+      port:                     Number(url.port) || 5432,
+      user:                     decodeURIComponent(url.username),
+      password:                 decodeURIComponent(url.password),
+      database:                 url.pathname.replace(/^\//, ''),
+      max:                      3,
+      idleTimeoutMillis:        30_000,
+      connectionTimeoutMillis:  10_000,
+      ssl:                      { rejectUnauthorized: false },
+    });
+
+    _pool.on('error', (err) => {
+      console.error('[db] Pool client error:', err.message);
     });
   }
   return _pool;
